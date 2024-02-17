@@ -5,9 +5,10 @@ const GitHubStrategy = require('passport-github').Strategy;
 const axios = require('axios');
 require('dotenv').config();
 const CORS = require('cors');
-app.use(CORS());
+
 
 const app = express();
+app.use(CORS());
 
 // Define userToken at the top level of your script
 let userToken;
