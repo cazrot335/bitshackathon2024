@@ -23,7 +23,7 @@ app.use(passport.session());
 passport.use(new GitHubStrategy({
     clientID: process.env.GITHUB_CLIENT_ID, // Use environment variable for client ID
     clientSecret: process.env.GITHUB_CLIENT_SECRET,
-    callbackURL: "http://localhost:3001/auth/github/callback"
+    callbackURL: "https://bitshackathon2024.vercel.app/auth/github/callback"
   },
   function(accessToken, refreshToken, profile, cb) {
     // Set the value of userToken
@@ -76,6 +76,9 @@ app.get('/starred', async (req, res) => {
   };
 
   res.json(result);
+});
+app.get('/', (req, res) => {
+  res.send('Hello, world!');
 });
 
 app.listen(3001);
