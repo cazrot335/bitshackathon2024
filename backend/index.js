@@ -6,8 +6,12 @@ const axios = require('axios');
 require('dotenv').config();
 const CORS = require('cors');
 
+
 const app = express();
 app.use(CORS());
+
+// Define userToken at the top level of your script
+let userToken;
 
 // Use express-session middleware
 app.use(session({
@@ -20,13 +24,13 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 passport.use(new GitHubStrategy({
-    clientID: process.env.GITHUB_CLIENT_ID,
+    clientID: process.env.GITHUB_CLIENT_ID, // Use environment variable for client ID
     clientSecret: process.env.GITHUB_CLIENT_SECRET,
     callbackURL: "https://bitshackathon2024.vercel.app/auth/github/callback"
   },
   function(accessToken, refreshToken, profile, cb) {
-    // Attach the accessToken to the user profile
-    profile.accessToken = accessToken;
+    // Set the value of userToken
+    userToken = accessToken;
     return cb(null, profile);
   }
 ));
@@ -51,22 +55,19 @@ app.get('/auth/github/callback',
   });
 
 app.get('/starred', async (req, res) => {
-  if (!req.user || !req.user.accessToken) {
-    return res.status(401).send('User not authenticated');
-  }
-
   const starredRepos = await axios.get('https://api.github.com/user/starred', {
     headers: {
-      Authorization: `token ${req.user.accessToken}`
+      Authorization: `token ${userToken}`
     }
   });
 
   const userProfile = await axios.get('https://api.github.com/user', {
     headers: {
-      Authorization: `token ${req.user.accessToken}`
+      Authorization: `token ${userToken}`
     }
   });
 
+  // Map over the response data and pick out the full_name property
   const repoNames = starredRepos.data.map(repo => repo.full_name);
 
   const result = {
@@ -79,7 +80,6 @@ app.get('/starred', async (req, res) => {
 
   res.json(result);
 });
-
 app.get('/', (req, res) => {
   res.send('Hello, world!');
 });
