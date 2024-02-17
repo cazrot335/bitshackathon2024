@@ -3,6 +3,7 @@ const session = require('express-session');
 const passport = require('passport');
 const GitHubStrategy = require('passport-github').Strategy;
 const axios = require('axios');
+require('dotenv').config();
 
 const app = express();
 
@@ -20,8 +21,8 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 passport.use(new GitHubStrategy({
-    clientID: "7ac9639d38c326ae11e6",
-    clientSecret: "c5011ee675ff680b8613431a01dd4db31a187a5b",
+    clientID: process.env.GITHUB_CLIENT_ID, // Use environment variable for client ID
+    clientSecret: process.env.GITHUB_CLIENT_SECRET,
     callbackURL: "http://localhost:3001/auth/github/callback"
   },
   function(accessToken, refreshToken, profile, cb) {
@@ -69,6 +70,7 @@ app.get('/starred', async (req, res) => {
   const result = {
     githubUsername: userProfile.data.login,
     githubProfileUrl: userProfile.data.html_url,
+    location: userProfile.data.location,
     bio: userProfile.data.bio,
     starredRepos: repoNames
   };
