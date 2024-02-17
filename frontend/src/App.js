@@ -3,9 +3,16 @@ import './App.css';
 
 function App() {
   const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
 
   const fetchData = async () => {
     const response = await fetch('https://bitshackathon2024.vercel.app/starred');
+    
+    if (!response.ok) {
+      setError('Network response was not ok');
+      return;
+    }
+
     const jsonData = await response.json();
     setData(jsonData);
   };
@@ -28,6 +35,7 @@ function App() {
         >
           Learn React
         </a>
+        {error && <p>{error}</p>}
         {data && <pre>{JSON.stringify(data, null, 2)}</pre>}
       </header>
     </div>
