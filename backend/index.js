@@ -4,6 +4,8 @@ const passport = require('passport');
 const GitHubStrategy = require('passport-github').Strategy;
 const axios = require('axios');
 require('dotenv').config();
+const CORS = require('cors');
+app.use(CORS());
 
 const app = express();
 
