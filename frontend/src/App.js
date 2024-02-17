@@ -5,7 +5,7 @@ function App() {
   const [data, setData] = useState(null);
 
   const fetchData = async () => {
-    const response = await fetch('https://bitshackathon2024.vercel.app/auth/github/callback');
+    const response = await fetch('https://bitshackathon2024.vercel.app/starred');
     const jsonData = await response.json();
     setData(jsonData);
   };
@@ -13,6 +13,7 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
+        <a href="https://bitshackathon2024.vercel.app/auth/github">Login with GitHub</a>
         <button onClick={fetchData}>
           Fetch Data
         </button>
