@@ -6,6 +6,9 @@ const axios = require('axios');
 
 const app = express();
 
+// Define userToken at the top level of your script
+let userToken;
+
 // Use express-session middleware
 app.use(session({
   secret: 'your-session-secret',
@@ -22,7 +25,7 @@ passport.use(new GitHubStrategy({
     callbackURL: "http://localhost:3001/auth/github/callback"
   },
   function(accessToken, refreshToken, profile, cb) {
-    // In a real application, you might store this accessToken in the user's session or a database
+    // Set the value of userToken
     userToken = accessToken;
     return cb(null, profile);
   }
@@ -53,7 +56,24 @@ app.get('/starred', async (req, res) => {
       Authorization: `token ${userToken}`
     }
   });
-  res.json(starredRepos.data);
+
+  const userProfile = await axios.get('https://api.github.com/user', {
+    headers: {
+      Authorization: `token ${userToken}`
+    }
+  });
+
+  // Map over the response data and pick out the full_name property
+  const repoNames = starredRepos.data.map(repo => repo.full_name);
+
+  const result = {
+    githubUsername: userProfile.data.login,
+    githubProfileUrl: userProfile.data.html_url,
+    bio: userProfile.data.bio,
+    starredRepos: repoNames
+  };
+
+  res.json(result);
 });
 
 app.listen(3001);
