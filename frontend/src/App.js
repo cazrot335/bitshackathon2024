@@ -17,10 +17,16 @@ function App() {
     setData(jsonData);
   };
 
+  const loginWithGithub = () => {
+    window.location.href = 'https://bitshackathon2024.vercel.app/auth/github';
+  };
+
   return (
     <div className="App">
       <header className="App-header">
-        <a href="https://bitshackathon2024.vercel.app/auth/github">Login with GitHub</a>
+        <button onClick={loginWithGithub}>
+          Login with GitHub
+        </button>
         <button onClick={fetchData}>
           Fetch Data
         </button>

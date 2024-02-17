@@ -6,7 +6,6 @@ const axios = require('axios');
 require('dotenv').config();
 const CORS = require('cors');
 
-
 const app = express();
 app.use(CORS());
 
@@ -49,37 +48,34 @@ app.get('/auth/github',
 
 app.get('/auth/github/callback', 
   passport.authenticate('github', { failureRedirect: '/login' }),
-  function(req, res) {
-    // Successful authentication, redirect to the starred repos.
-    res.redirect('/starred');
+  async function(req, res) {
+    // Successful authentication, get the starred repos and user profile.
+    const starredRepos = await axios.get('https://api.github.com/user/starred', {
+      headers: {
+        Authorization: `token ${userToken}`
+      }
+    });
+
+    const userProfile = await axios.get('https://api.github.com/user', {
+      headers: {
+        Authorization: `token ${userToken}`
+      }
+    });
+
+    // Map over the response data and pick out the full_name property
+    const repoNames = starredRepos.data.map(repo => repo.full_name);
+
+    const result = {
+      githubUsername: userProfile.data.login,
+      githubProfileUrl: userProfile.data.html_url,
+      location: userProfile.data.location,
+      bio: userProfile.data.bio,
+      starredRepos: repoNames
+    };
+
+    res.json(result);
   });
 
-app.get('/starred', async (req, res) => {
-  const starredRepos = await axios.get('https://api.github.com/user/starred', {
-    headers: {
-      Authorization: `token ${userToken}`
-    }
-  });
-
-  const userProfile = await axios.get('https://api.github.com/user', {
-    headers: {
-      Authorization: `token ${userToken}`
-    }
-  });
-
-  // Map over the response data and pick out the full_name property
-  const repoNames = starredRepos.data.map(repo => repo.full_name);
-
-  const result = {
-    githubUsername: userProfile.data.login,
-    githubProfileUrl: userProfile.data.html_url,
-    location: userProfile.data.location,
-    bio: userProfile.data.bio,
-    starredRepos: repoNames
-  };
-
-  res.json(result);
-});
 app.get('/', (req, res) => {
   res.send('Hello, world!');
 });
