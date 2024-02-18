@@ -9,7 +9,9 @@ require('dotenv').config();
 const CORS = require('cors');
 
 const app = express();
-app.use(CORS());
+app.use(CORS({
+  origin: 'http://localhost:3000'
+}));
 
 // Use express-session middleware
 app.use(session({
