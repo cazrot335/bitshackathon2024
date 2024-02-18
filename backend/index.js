@@ -73,6 +73,7 @@ app.get('/starred', async (req, res) => {
   const result = {
     githubUsername: userProfile.data.login,
     githubProfileUrl: userProfile.data.html_url,
+    githubProfilePictureUrl: userProfile.data.avatar_url,
     location: userProfile.data.location,
     bio: userProfile.data.bio,
     starredRepos: repoNames
