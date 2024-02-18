@@ -99,7 +99,12 @@ app.get('/starred', async (req, res) => {
     { upsert: true, new: true, runValidators: true }, // options
   );
 
-  res.json(result);
+  res.json({ message: 'User data saved successfully', data: result });
+});
+
+app.get('/users', async (req, res) => {
+  const users = await User.find({});
+  res.json(users);
 });
 
 app.get('/', (req, res) => {
