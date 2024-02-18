@@ -3,9 +3,10 @@ const session = require('express-session');
 const passport = require('passport');
 const GitHubStrategy = require('passport-github').Strategy;
 const axios = require('axios');
+const mongoose = require('mongoose');
+const { Schema } = mongoose;
 require('dotenv').config();
 const CORS = require('cors');
-
 
 const app = express();
 app.use(CORS());
@@ -54,6 +55,18 @@ app.get('/auth/github/callback',
     res.redirect('/starred');
   });
 
+// Define Mongoose schema and model
+const userSchema = new Schema({
+  githubUsername: String,
+  githubProfileUrl: String,
+  githubProfilePictureUrl: String,
+  location: String,
+  bio: String,
+  starredRepos: [String]
+});
+
+const User = mongoose.model('User', userSchema);
+
 app.get('/starred', async (req, res) => {
   const starredRepos = await axios.get('https://api.github.com/user/starred', {
     headers: {
@@ -79,10 +92,21 @@ app.get('/starred', async (req, res) => {
     starredRepos: repoNames
   };
 
+  // Save or update user data
+  await User.findOneAndUpdate(
+    { githubUsername: result.githubUsername }, // find a document with that filter
+    result, // document to insert when nothing was found
+    { upsert: true, new: true, runValidators: true }, // options
+  );
+
   res.json(result);
 });
+
 app.get('/', (req, res) => {
   res.send('Hello, world!');
 });
+
+// Connect to MongoDB
+mongoose.connect('mongodb+srv://nischal:lawdatelassan@cluster0.mkr1avg.mongodb.net/?retryWrites=true&w=majority', { useNewUrlParser: true, useUnifiedTopology: true });
 
 app.listen(3001);
