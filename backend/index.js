@@ -107,6 +107,39 @@ app.get('/users', async (req, res) => {
   res.json(users);
 });
 
+app.get('/connect', async (req, res) => {
+  const { username } = req.query;
+
+  // Fetch the starred repositories of the given user
+  const user = await User.findOne({ githubUsername: username });
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+
+  // Find other users that have at least 3 of the same starred repositories
+  const users = await User.find({
+    githubUsername: { $ne: username },
+    starredRepos: { $in: user.starredRepos }
+  });
+
+  // Filter users that have at least 3 matching repositories
+  const matchingUsers = users.filter(user => {
+    const matchingRepos = user.starredRepos.filter(repo => user.starredRepos.includes(repo));
+    return matchingRepos.length >= 3;
+  });
+
+  // Map the users to only include the necessary data
+  const result = matchingUsers.map(user => ({
+    githubUsername: user.githubUsername,
+    githubProfileUrl: user.githubProfileUrl,
+    githubProfilePictureUrl: user.githubProfilePictureUrl,
+    location: user.location,
+    bio: user.bio
+  }));
+
+  res.json(result);
+});
+
 app.get('/', (req, res) => {
   res.send('Hello, world!');
 });
