@@ -11,9 +11,6 @@ const CORS = require('cors');
 const app = express();
 app.use(CORS());
 
-// Define userToken at the top level of your script
-let userToken;
-
 // Use express-session middleware
 app.use(session({
   secret: 'your-session-secret',
@@ -25,13 +22,12 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 passport.use(new GitHubStrategy({
-    clientID: process.env.GITHUB_CLIENT_ID, // Use environment variable for client ID
+    clientID: process.env.GITHUB_CLIENT_ID,
     clientSecret: process.env.GITHUB_CLIENT_SECRET,
     callbackURL: "https://bitshackathon2024.vercel.app/auth/github/callback"
   },
   function(accessToken, refreshToken, profile, cb) {
-    // Set the value of userToken
-    userToken = accessToken;
+    profile.token = accessToken;
     return cb(null, profile);
   }
 ));
@@ -68,6 +64,8 @@ const userSchema = new Schema({
 const User = mongoose.model('User', userSchema);
 
 app.get('/starred', async (req, res) => {
+  const userToken = req.user.token;
+
   const starredRepos = await axios.get('https://api.github.com/user/starred', {
     headers: {
       Authorization: `token ${userToken}`
@@ -80,7 +78,6 @@ app.get('/starred', async (req, res) => {
     }
   });
 
-  // Map over the response data and pick out the full_name property
   const repoNames = starredRepos.data.map(repo => repo.full_name);
 
   const result = {
@@ -92,11 +89,10 @@ app.get('/starred', async (req, res) => {
     starredRepos: repoNames
   };
 
-  // Save or update user data
   await User.findOneAndUpdate(
-    { githubUsername: result.githubUsername }, // find a document with that filter
-    result, // document to insert when nothing was found
-    { upsert: true, new: true, runValidators: true }, // options
+    { githubUsername: result.githubUsername },
+    result,
+    { upsert: true, new: true, runValidators: true },
   );
 
   res.json({ message: 'User data saved successfully', data: result });
@@ -110,30 +106,25 @@ app.get('/users', async (req, res) => {
 app.get('/connect', async (req, res) => {
   const { username } = req.query;
 
-  // Fetch the starred repositories the given user
   const user = await User.findOne({ githubUsername: username });
   if (!user) {
     return res.status(404).json({ message: 'User not found' });
   }
 
-  // Find other users that have at least 3 of the same starred repositories
   const users = await User.find({
     githubUsername: { $ne: username },
     starredRepos: { $in: user.starredRepos }
   });
 
-  // Filter users that have at least 3 matching repositories
   const matchingUsers = users.filter(user => {
     const matchingRepos = user.starredRepos.filter(repo => user.starredRepos.includes(repo));
     return matchingRepos.length >= 3;
   });
 
-  // If no matching users found, return a message
   if (matchingUsers.length === 0) {
     return res.json({ message: 'No users found' });
   }
 
-  // Map the users to only include the necessary data
   const result = matchingUsers.map(user => ({
     githubUsername: user.githubUsername,
     githubProfileUrl: user.githubProfileUrl,
@@ -149,7 +140,6 @@ app.get('/', (req, res) => {
   res.send('Hello, world!');
 });
 
-// Connect to MongoDB
 mongoose.connect('mongodb+srv://nischal:lawdatelassan@cluster0.mkr1avg.mongodb.net/?retryWrites=true&w=majority', { useNewUrlParser: true, useUnifiedTopology: true });
 
 app.listen(3001);
