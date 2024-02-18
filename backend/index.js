@@ -110,7 +110,7 @@ app.get('/users', async (req, res) => {
 app.get('/connect', async (req, res) => {
   const { username } = req.query;
 
-  // Fetch the starred repositories of the given user
+  // Fetch the starred repositories the given user
   const user = await User.findOne({ githubUsername: username });
   if (!user) {
     return res.status(404).json({ message: 'User not found' });
@@ -127,6 +127,11 @@ app.get('/connect', async (req, res) => {
     const matchingRepos = user.starredRepos.filter(repo => user.starredRepos.includes(repo));
     return matchingRepos.length >= 3;
   });
+
+  // If no matching users found, return a message
+  if (matchingUsers.length === 0) {
+    return res.json({ message: 'No users found' });
+  }
 
   // Map the users to only include the necessary data
   const result = matchingUsers.map(user => ({
