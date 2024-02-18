@@ -11,9 +11,6 @@ const CORS = require('cors');
 const app = express();
 app.use(CORS());
 
-// Define userToken at the top level of your script
-let userToken;
-
 // Use express-session middleware
 app.use(session({
   secret: 'your-session-secret',
@@ -30,8 +27,8 @@ passport.use(new GitHubStrategy({
     callbackURL: "https://bitshackathon2024.vercel.app/auth/github/callback"
   },
   function(accessToken, refreshToken, profile, cb) {
-    // Set the value of userToken
-    userToken = accessToken;
+    // Attach the access token to the user profile
+    profile.accessToken = accessToken;
     return cb(null, profile);
   }
 ));
@@ -68,6 +65,9 @@ const userSchema = new Schema({
 const User = mongoose.model('User', userSchema);
 
 app.get('/starred', async (req, res) => {
+  // Use the access token from the user's session
+  const userToken = req.user.accessToken;
+
   const starredRepos = await axios.get('https://api.github.com/user/starred', {
     headers: {
       Authorization: `token ${userToken}`
